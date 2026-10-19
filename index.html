@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>全能工具箱Pro｜CSV双兼容版</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,'微软雅黑',sans-serif;}
+body{background:#f4f7fb;padding:12px;min-height:100vh;}
+.main{max-width:640px;margin:0 auto;background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 14px #e1e7f5;}
+h2{text-align:center;color:#111;margin-bottom:18px;font-size:20px;display:flex;align-items:center;justify-content:center;gap:8px;}
+h2 svg{width:32px;height:32px;}
+.block{border:1px solid #dde3f0;border-radius:10px;padding:14px;margin-bottom:16px;}
+h3{font-size:16px;margin-bottom:12px;color:#222;}
+label{display:block;margin:9px 0 4px;font-size:14px;color:#333;}
+textarea,input{width:100%;border:1px solid #ccd6e6;border-radius:7px;padding:10px;font-size:14px;background:#fff;}
+textarea{min-height:110px;resize:vertical;white-space:pre-wrap;}
+.row{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;}
+button{flex:1;min-width:110px;padding:12px;border:none;border-radius:7px;color:#fff;font-size:14px;cursor:pointer;transition:0.2s;}
+button:hover{opacity:0.85;}
+.tip{font-size:12px;color:#666;margin-top:6px;line-height:1.5}
+.showBox{margin-top:14px;text-align:center;display:none;}
+canvas{max-width:100%;border:6px solid #fff;box-shadow:0 0 8px #ddd;border-radius:6px;background:#fff;}
+#uploadImgShow{max-width:100%;max-height:260px;margin:8px 0;border:1px solid #eee;border-radius:6px;display:none;}
+.blue{background:#2563eb;}
+.green{background:#059669;}
+.purple{background:#9333ea;}
+.orange{background:#f97316;}
+.red{background:#dc2626;}
+.teal{background:#0d9488;}
+.gray{background:#6b7280;}
+.permission-tip{background:#eef2ff;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;color:#1e293b;border-left:4px solid #3b82f6;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.permission-tip .status{display:flex;align-items:center;gap:6px;}
+.permission-tip .status .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.dot.green{background:#22c55e;}
+.dot.yellow{background:#eab308;}
+.dot.red{background:#ef4444;}
+#requestPermBtn{background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:13px;cursor:pointer;flex-shrink:0;}
+#requestPermBtn:disabled{opacity:0.6;cursor:not-allowed;}
+.download-progress{display:none;margin:8px 0;padding:8px 12px;background:#f0fdf4;border-radius:6px;font-size:13px;color:#166534;border:1px solid #bbf7d0;}
+.download-progress.show{display:block;}
+.signature-area{margin-top:24px;padding-top:16px;border-top:2px dashed #dde3f0;display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;}
+.signature-area .icon-wrap svg{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);padding:4px;}
+.signature-area .sign-text{font-size:16px;font-weight:500;color:#1e293b;letter-spacing:1px;}
+.signature-area .sign-text small{font-weight:400;color:#64748b;font-size:13px;margin-left:4px;}
+</style>
+</head>
+<body>
+<div class="main">
+	<h2>
+		<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#3b82f6" stroke="#fff" stroke-width="2"></circle><path d="M16 6L18 10H22L19 13L21 17L16 15.5L11 17L13 13L10 10H14L16 6Z" fill="white"></path><circle cx="16" cy="16" r="3" fill="white"></circle><path d="M24 16L26 14L24 12L26 10L24 8L22 10L20 8L18 10L20 12L18 14L20 16L22 14L24 16Z" fill="white" opacity="0.6"></path></svg>
+		全能工具箱Pro｜CSV双兼容版
+	</h2>
+
+	<div class="permission-tip" id="permTip">
+		<span class="status"><span class="dot green" id="statusDot"></span><span id="statusText">✅ 存储权限已授予</span></span>
+		<button id="requestPermBtn" disabled="">✅ 权限已就绪</button>
+	</div>
+
+	<!-- 模块1 -->
+	<div class="block"><h3>一、图片上传处理</h3>
+		<input type="file" id="imgUpload" accept="image/*">
+		<img id="uploadImgShow" alt="预览">
+		<label>水印文字：</label><input id="waterText" placeholder="不填则不加水印">
+		<div class="row">
+			<button class="gray" id="addWaterBtn">生成带水印图片</button>
+			<button class="purple" id="imgToBase64">图片转Base64</button>
+		</div>
+		<textarea id="base64Out" placeholder="Base64输出区" readonly=""></textarea>
+	</div>
+
+	<!-- 模块2 -->
+	<div class="block"><h3>二、二维码生成</h3>
+		<label>二维码内容：</label><textarea id="qrText" placeholder="输入参数或链接"></textarea>
+		<label>尺寸：</label><input type="number" id="qrSize" value="320" min="150" max="600">
+		<label>文件名：</label><input id="qrImgName" value="二维码">
+		<div class="row">
+			<button class="blue" id="createQr">生成二维码</button>
+			<button class="green" id="saveQrImg">下载PNG</button>
+		</div>
+		<div class="showBox" id="qrWrap"><canvas id="qrCanvas"></canvas></div>
+	</div>
+
+	<!-- 模块3 -->
+	<div class="block"><h3>三、文字GIF动图</h3>
+		<label>动图文字：</label><textarea id="gifText" placeholder="多行文字"></textarea>
+		<label>速度(ms)：</label><input type="number" id="gifSpeed" value="180" min="50">
+		<label>文件名：</label><input id="gifFileName" value="参数动图">
+		<div class="row">
+			<button class="orange" id="makeGif">生成GIF</button>
+			<button class="teal" id="saveGif">下载GIF</button>
+		</div>
+		<div class="showBox" id="gifWrap"><canvas id="gifCanvas" width="420" height="320"></canvas></div>
+	</div>
+
+	<!-- 模块4 -->
+	<div class="block"><h3>四、文档导出（Excel + WPS 双兼容）</h3>
+		<label>存档内容：</label>
+		<textarea id="fileText" placeholder="参数名称,符号,数值,单位,备注
+铁心直径,D,6.8,cm,主参数"></textarea>
+		<label>文档名称：</label><input id="docName" value="参数存档">
+		<div class="row">
+			<button class="blue" id="exportTxt">导出TXT</button>
+			<button class="green" id="exportCsv">✅ 导出CSV</button>
+			<button class="purple" id="exportJson">导出JSON</button>
+		</div>
+		<p class="tip">✅ 已优化编码：Excel + WPS 打开中文均正常显示</p>
+	</div>
+
+	<!-- 模块5 -->
+	<div class="block"><h3>五、导出HTML</h3>
+		<label>文件名：</label><input id="htmlSaveName" value="工具箱存档">
+		<div class="row">
+			<button class="purple" id="exportSelfHtml">导出源码HTML</button>
+			<button class="teal" id="exportImgHtml">导出带图HTML</button>
+		</div>
+		<p class="tip">带图片HTML内置Base64，离线可看</p>
+	</div>
+
+	<div class="row"><button class="red" id="clearAll">一键清空</button></div>
+
+	<div class="download-progress" id="downloadProgress">⏳ 正在准备下载...</div>
+
+	<div class="signature-area">
+		<div class="icon-wrap"><svg viewBox="0 0 60 60"><rect x="2" y="2" width="56" height="56" rx="12" fill="#3b82f6" stroke="#1e293b" stroke-width="3"></rect><path d="M18 42L24 20L30 36L36 20L42 42" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="30" cy="30" r="6" fill="white" stroke="#1e293b" stroke-width="2"></circle><path d="M12 12L20 18L12 24L20 30L12 36L20 42" stroke="white" stroke-width="3" stroke-linecap="round"></path><path d="M48 12L40 18L48 24L40 30L48 36L40 42" stroke="white" stroke-width="3" stroke-linecap="round"></path></svg></div>
+		<div class="sign-text">钟子情 <small>｜ 全能工具箱设计</small></div>
+	</div>
+</div>
+
+<script>
+(function() {
+	'use strict';
+
+	// ============================================================
+	//  1. 存储权限管理
+	// ============================================================
+	const statusDot = document.getElementById('statusDot');
+	const statusText = document.getElementById('statusText');
+	const permBtn = document.getElementById('requestPermBtn');
+	const progressEl = document.getElementById('downloadProgress');
+	let hasStoragePermission = false;
+
+	function updatePermStatus(granted, msg) {
+		hasStoragePermission = granted;
+		if (granted) {
+			statusDot.className = 'dot green';
+			statusText.textContent = msg || '✅ 存储权限已授予';
+			permBtn.textContent = '✅ 权限已就绪';
+			permBtn.disabled = true;
+		} else {
+			statusDot.className = 'dot yellow';
+			statusText.textContent = msg || '⚠️ 未获取存储权限，请点击申请';
+			permBtn.textContent = '📁 申请存储权限';
+			permBtn.disabled = false;
+		}
+	}
+
+	function showProgress(msg, show) {
+		if (show) {
+			progressEl.textContent = msg || '⏳ 正在准备下载...';
+			progressEl.className = 'download-progress show';
+		} else {
+			progressEl.className = 'download-progress';
+		}
+	}
+
+	async function requestStoragePermission() {
+		permBtn.textContent = '⏳ 申请中...';
+		permBtn.disabled = true;
+		try {
+			if (navigator.permissions && navigator.permissions.query) {
+				try {
+					const result = await navigator.permissions.query({ name: 'storage' });
+					if (result.state === 'granted') { updatePermStatus(true, '✅ 存储权限已授予'); return true; }
+					else if (result.state === 'prompt') { updatePermStatus(true, '✅ 请在弹窗中允许'); return true; }
+				} catch (e) {}
+			}
+			try {
+				if (window.showDirectoryPicker) {
+					const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+					const testFile = await dirHandle.getFileHandle('.perm_test.txt', { create: true });
+					const writer = await testFile.createWritable();
+					await writer.write('test');
+					await writer.close();
+					await dirHandle.removeEntry('.perm_test.txt');
+					updatePermStatus(true, '✅ 存储权限已授予');
+					return true;
+				}
+			} catch (e) { if (e.name !== 'AbortError') {} }
+			try {
+				if (navigator.storage && navigator.storage.getDirectory) {
+					const root = await navigator.storage.getDirectory();
+					const testFile = await root.getFileHandle('.perm_test.txt', { create: true });
+					await root.removeEntry('.perm_test.txt');
+					updatePermStatus(true, '✅ 存储权限已授予');
+					return true;
+				}
+			} catch (e) {}
+			try {
+				const db = await new Promise((resolve, reject) => {
+					const req = indexedDB.open('_perm_test_db', 1);
+					req.onupgradeneeded = () => { req.result.createObjectStore('store'); };
+					req.onsuccess = () => resolve(req.result);
+					req.onerror = () => reject(req.error);
+				});
+				db.close();
+				indexedDB.deleteDatabase('_perm_test_db');
+				updatePermStatus(true, '✅ 存储能力正常');
+				return true;
+			} catch (e) {}
+			updatePermStatus(false, '⚠️ 请在系统设置中手动开启存储权限');
+			return false;
+		} catch (e) {
+			updatePermStatus(false, '⚠️ 权限请求异常，请手动开启');
+			return false;
+		} finally {
+			permBtn.textContent = hasStoragePermission ? '✅ 权限已就绪' : '📁 申请存储权限';
+			permBtn.disabled = hasStoragePermission;
+		}
+	}
+
+	async function autoDetectPermission() {
+		try {
+			const db = await new Promise((resolve, reject) => {
+				const req = indexedDB.open('_quick_test', 1);
+				req.onsuccess = () => resolve(req.result);
+				req.onerror = () => reject(req.error);
+			});
+			db.close();
+			indexedDB.deleteDatabase('_quick_test');
+			updatePermStatus(false, '⚠️ 建议点击申请完整权限');
+			setTimeout(() => requestStoragePermission(), 300);
+		} catch (e) {
+			updatePermStatus(false, '⚠️ 存储受限，请点击申请权限');
+		}
+	}
+
+	permBtn.addEventListener('click', async function() { await requestStoragePermission(); });
+	autoDetectPermission();
+
+	// ============================================================
+	//  2. 万能下载函数
+	// ============================================================
+	async function downloadFile(content, filename, mimeType) {
+		showProgress('⏳ 正在准备下载...', true);
+
+		try {
+			if (!hasStoragePermission) {
+				showProgress('⏳ 正在申请存储权限...', true);
+				const granted = await requestStoragePermission();
+				if (!granted) {
+					showProgress('❌ 请先授予存储权限再下载', true);
+					setTimeout(() => showProgress('', false), 2000);
+					return false;
+				}
+			}
+
+			let blob;
+			if (content instanceof Blob || content instanceof File) {
+				blob = content;
+			} else if (typeof content === 'string' && content.startsWith('data:')) {
+				const response = await fetch(content);
+				blob = await response.blob();
+			} else {
+				blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8' });
+			}
+
+			try {
+				const reader = new FileReader();
+				const dataUriPromise = new Promise((resolve, reject) => {
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = reject;
+				});
+				reader.readAsDataURL(blob);
+				const dataUri = await dataUriPromise;
+				const a = document.createElement('a');
+				a.href = dataUri;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				showProgress('✅ 下载已触发', true);
+				setTimeout(() => showProgress('', false), 2000);
+				return true;
+			} catch (e) {
+				console.warn('数据URI下载失败', e);
+			}
+
+			try {
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = filename;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				setTimeout(() => URL.revokeObjectURL(url), 5000);
+				showProgress('✅ 下载已触发', true);
+				setTimeout(() => showProgress('', false), 2000);
+				return true;
+			} catch (e) {
+				console.warn('Blob URL下载失败', e);
+			}
+
+			try {
+				const reader = new FileReader();
+				const dataUriPromise = new Promise((resolve, reject) => {
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = reject;
+				});
+				reader.readAsDataURL(blob);
+				const dataUri = await dataUriPromise;
+				window.location.href = dataUri;
+				showProgress('✅ 下载已触发', true);
+				setTimeout(() => showProgress('', false), 2000);
+				return true;
+			} catch (e) {
+				throw new Error('所有下载方式均失败');
+			}
+
+		} catch (e) {
+			console.error('下载失败:', e);
+			alert('下载失败，请检查存储权限。错误: ' + e.message);
+			showProgress('❌ 下载失败', true);
+			setTimeout(() => showProgress('', false), 3000);
+			return false;
+		}
+	}
+
+	// ============================================================
+	//  3. ★★★ 核心修复：CSV 双兼容（Excel + WPS）★★★
+	//     Excel 需要 BOM + 逗号分隔 + UTF-8
+	//     WPS 兼容性更好，但加上 BOM 也完全正常
+	// ============================================================
+	function downloadCSV(content, filename) {
+		// 1. 添加 UTF-8 BOM (Excel 识别 UTF-8 的关键)
+		const bom = '\uFEFF';
+		
+		// 2. 确保换行符为 \r\n (Excel 标准)
+		let csvContent = content.replace(/\n/g, '\r\n');
+		
+		// 3. 如果有中文，确保不会因为逗号问题错乱
+		//    但用户自行输入逗号分隔，我们保留原样
+		
+		// 4. 最终内容 = BOM + 内容
+		const finalContent = bom + csvContent;
+		
+		// 5. 用 Blob 以 UTF-8 编码导出
+		downloadFile(finalContent, filename, 'text/csv;charset=utf-8');
+	}
+
+	// ============================================================
+	//  4. 所有功能模块
+	// ============================================================
+	let qrData = "", gifBlob = null, uploadImage = null;
+	const waterCanvas = document.createElement("canvas");
+	const qrCanvas = document.getElementById("qrCanvas");
+	const gifCanvas = document.getElementById("gifCanvas");
+	const gifCtx = gifCanvas.getContext("2d");
+	const uploadShow = document.getElementById("uploadImgShow");
+	const base64Out = document.getElementById("base64Out");
+
+	// 图片上传
+	document.getElementById("imgUpload").addEventListener("change", function(e) {
+		const file = e.target.files[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = function(ev) {
+			uploadImage = new Image();
+			uploadImage.onload = function() { uploadShow.src = uploadImage.src; uploadShow.style.display = "block"; };
+			uploadImage.onerror = function() { alert("图片加载失败"); };
+			uploadImage.src = ev.target.result;
+		};
+		reader.readAsDataURL(file);
+	});
+
+	// 水印
+	document.getElementById("addWaterBtn").addEventListener("click", function() {
+		if (!uploadImage || !uploadImage.src) { alert("请先上传图片！"); return; }
+		const waterTxt = document.getElementById("waterText").value.trim();
+		const w = uploadImage.width, h = uploadImage.height;
+		if (w === 0 || h === 0) { alert("图片未加载完成"); return; }
+		waterCanvas.width = w; waterCanvas.height = h;
+		const ctx = waterCanvas.getContext("2d");
+		ctx.clearRect(0, 0, w, h);
+		ctx.drawImage(uploadImage, 0, 0);
+		if (waterTxt) {
+			ctx.fillStyle = "rgba(255,60,60,0.7)";
+			ctx.font = Math.max(14, w/25) + "px 'Microsoft YaHei', sans-serif";
+			ctx.textBaseline = "bottom";
+			ctx.fillText(waterTxt, 12, h-12);
+		}
+		const base = waterCanvas.toDataURL("image/png");
+		uploadShow.src = base;
+		base64Out.value = base;
+	});
+
+	document.getElementById("imgToBase64").addEventListener("click", function() {
+		if (!uploadImage || !uploadImage.src) { alert("请先上传图片！"); return; }
+		base64Out.value = uploadShow.src || uploadImage.src;
+	});
+
+	// 二维码
+	document.getElementById("createQr").addEventListener("click", async function() {
+		const text = document.getElementById("qrText").value.trim();
+		const size = Number(document.getElementById("qrSize").value) || 320;
+		if (!text) { alert("请输入二维码内容"); return; }
+		await QRCode.toCanvas(qrCanvas, text, { width: size, margin: 2 });
+		qrData = qrCanvas.toDataURL("image/png");
+		document.getElementById("qrWrap").style.display = "block";
+	});
+
+	document.getElementById("saveQrImg").addEventListener("click", function() {
+		if (!qrData) { alert("请先生成二维码"); return; }
+		const name = document.getElementById("qrImgName").value.trim() || "二维码";
+		downloadFile(qrData, name + ".png", "image/png");
+	});
+
+	// GIF
+	document.getElementById("makeGif").addEventListener("click", function() {
+		const text = document.getElementById("gifText").value;
+		const speed = Number(document.getElementById("gifSpeed").value) || 180;
+		if (!text) { alert("请输入动图文字"); return; }
+		document.getElementById("gifWrap").style.display = "block";
+		const lines = text.split("\n").filter(l => l.trim() !== "");
+		if (lines.length === 0) { alert("文字不能为空"); return; }
+		const gif = new GIF({ workers: 2, quality: 10 });
+		const ctx = gifCtx;
+		const canvas = gifCanvas;
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		lines.forEach((line, idx) => {
+			ctx.fillStyle = "#ffffff";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = "#000000";
+			ctx.font = "20px 'Microsoft YaHei', sans-serif";
+			ctx.textBaseline = "top";
+			for (let j = 0; j <= idx && j < lines.length; j++) {
+				ctx.fillText(lines[j], 20, 20 + j * 32);
+			}
+			gif.addFrame(canvas, { delay: speed, copy: true });
+		});
+		gif.on("finished", function(blob) { gifBlob = blob; });
+		gif.render();
+	});
+
+	document.getElementById("saveGif").addEventListener("click", function() {
+		if (!gifBlob) { alert("请先生成GIF动图"); return; }
+		const name = document.getElementById("gifFileName").value.trim() || "动图";
+		downloadFile(gifBlob, name + ".gif", "image/gif");
+	});
+
+	// ============================================================
+	//  5. 文本导出（TXT / CSV / JSON）
+	// ============================================================
+	function downloadText(content, filename, mimeType) {
+		downloadFile(content, filename, mimeType || 'text/plain;charset=utf-8');
+	}
+
+	document.getElementById("exportTxt").addEventListener("click", function() {
+		const txt = document.getElementById("fileText").value;
+		const name = document.getElementById("docName").value.trim() || "文档";
+		downloadText(txt, name + ".txt", "text/plain;charset=utf-8");
+	});
+
+	// ★★★ CSV 导出 - 双兼容（Excel + WPS）★★★
+	document.getElementById("exportCsv").addEventListener("click", function() {
+		const txt = document.getElementById("fileText").value;
+		const name = document.getElementById("docName").value.trim() || "表格";
+		downloadCSV(txt, name + ".csv");
+	});
+
+	document.getElementById("exportJson").addEventListener("click", function() {
+		const raw = document.getElementById("fileText").value;
+		const data = { title: document.getElementById("docName").value || "参数", content: raw.split("\n") };
+		const json = JSON.stringify(data, null, 2);
+		const name = document.getElementById("docName").value.trim() || "参数";
+		downloadText(json, name + ".json", "application/json;charset=utf-8");
+	});
+
+	document.getElementById("exportSelfHtml").addEventListener("click", function() {
+		const doctype = '<!DOCTYPE html>\n';
+		const code = doctype + document.documentElement.outerHTML;
+		const name = document.getElementById("htmlSaveName").value.trim() || "工具箱";
+		downloadText(code, name + ".html", "text/html;charset=utf-8");
+	});
+
+	document.getElementById("exportImgHtml").addEventListener("click", function() {
+		const paramText = document.getElementById("fileText").value || "";
+		const imgBase = base64Out.value || "";
+		let htmlStr = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>参数存档</title><style>body{padding:15px;font-size:14px;font-family:system-ui;}</style></head><body>`;
+		if (imgBase) htmlStr += `<h3>图纸</h3><img src="${imgBase}" style="max-width:100%;"><hr>`;
+		htmlStr += `<h3>参数</h3><pre style="white-space:pre-wrap;background:#f5f5f5;padding:10px;border-radius:6px;">${paramText}</pre></body></html>`;
+		const name = document.getElementById("htmlSaveName").value.trim() || "图片参数存档";
+		downloadText(htmlStr, name + "_图片存档.html", "text/html;charset=utf-8");
+	});
+
+	// 清空
+	document.getElementById("clearAll").addEventListener("click", function() {
+		document.getElementById("imgUpload").value = "";
+		uploadShow.style.display = "none";
+		uploadShow.src = "";
+		base64Out.value = "";
+		document.getElementById("waterText").value = "";
+		document.getElementById("qrText").value = "";
+		document.getElementById("gifText").value = "";
+		document.getElementById("fileText").value = "";
+		document.getElementById("qrWrap").style.display = "none";
+		document.getElementById("gifWrap").style.display = "none";
+		qrData = ""; gifBlob = null; uploadImage = null;
+		gifCtx.clearRect(0, 0, gifCanvas.width, gifCanvas.height);
+	});
+
+	window.addEventListener('error', function(e) { console.warn('运行时错误:', e.message); return true; });
+	window.addEventListener('unhandledrejection', function(e) { console.warn('未处理的Promise错误:', e.reason); e.preventDefault(); });
+
+})();
+</script>
+
+</body></html>
